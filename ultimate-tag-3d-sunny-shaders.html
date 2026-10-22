@@ -1,0 +1,1107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Ultimate Tag 3D — Direct Game</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101827;color:#fff;font-family:system-ui,Arial;overflow:hidden}
+canvas{display:block}
+#hud{position:absolute;top:12px;left:12px;right:12px;display:flex;gap:9px;flex-wrap:wrap;align-items:center;pointer-events:none}
+#hud span,#status{background:#08101ccf;border:1px solid #ffffff32;border-radius:12px;padding:9px 13px;font-weight:750}
+button{border:0;color:#fff;border-radius:12px;padding:11px 16px;font-weight:800;background:#2563eb;cursor:pointer;touch-action:manipulation}
+#hud button{pointer-events:auto}
+#status{position:absolute;top:72px;left:12px;font-size:13px;max-width:min(90vw,520px)}
+#info{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:12px;opacity:.9;white-space:nowrap;background:#0008;padding:6px 12px;border-radius:10px}
+#mobile{position:absolute;bottom:44px;width:100%;pointer-events:none;display:flex;justify-content:space-between;padding:0 25px}
+#stick{height:125px;width:125px;border-radius:50%;border:3px solid #ffffff85;background:#ffffff25;pointer-events:auto;touch-action:none;position:relative}
+#nub{position:absolute;top:43px;left:43px;width:34px;height:34px;border-radius:50%;background:#fff9;pointer-events:none}
+#actions{display:flex;gap:12px;align-items:center;pointer-events:none}
+#jump,#dashBtn,#runBtn{align-self:center;width:90px;height:90px;border-radius:50%;pointer-events:auto;border:2px solid #fff7}
+#jump{background:#ec4899bb}
+#dashBtn{background:#0ea5e9bb}
+#emoteBtn{background:#7c3aed;pointer-events:auto}#emoteMenu{position:absolute;right:12px;bottom:145px;z-index:4;display:none;background:#101a32ee;border:1px solid #a78bfa;border-radius:14px;padding:12px;max-width:275px}#emoteMenu.open{display:block}#emoteMenu button{margin:4px;background:#6d28d9}#runBtn{background:#16a34abb;width:72px;height:72px;font-size:13px;user-select:none}
+#staminaBox{min-width:170px;display:flex;flex-direction:column;gap:5px}
+#staminaTrack{height:9px;border-radius:8px;background:#ffffff36;overflow:hidden}
+#staminaFill{height:100%;width:100%;background:linear-gradient(90deg,#86efac,#16a34a);transition:width .08s linear}
+#overlay{position:absolute;inset:0;background:#0f172acc;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:25px}
+h1{font-size:clamp(25px,6vw,55px);margin:5px}
+#overlay p{max-width:560px;line-height:1.6}
+#start{font-size:20px;padding:15px 29px;background:#06a5eb}
+@media(pointer:fine){#mobile{display:none}}
+@media(max-width:480px){#hud span{font-size:12px;padding:8px}#status{top:138px}#info{bottom:4px;font-size:10px}#mobile{padding:0 9px;bottom:48px}#actions{gap:5px}#stick{width:104px;height:104px;flex-shrink:0}#nub{top:34px;left:34px}#jump,#dashBtn{width:66px;height:66px;padding:4px;font-size:12px}#runBtn{width:66px;height:66px;padding:4px;font-size:11px}}
+</style>
+</head>
+<body>
+<div id="hud">
+  <span>🏷️ ULTIMATE TAG 3D</span>
+  <span id="clock">⏱ 90s</span>
+  <span id="score">⭐ 0</span>
+  <span id="role">💙 Runner</span>
+  <span id="dashHud">⚡ Dash Ready</span>
+  <span id="staminaBox"><span id="staminaValue" style="background:none;border:0;padding:0">🏃 Stamina 50/50</span><span id="staminaTrack"><span id="staminaFill" style="display:block"></span></span></span>
+  <button id="musicToggle" aria-label="Toggle music">🎵 Music On</button><button id="sfxToggle" aria-label="Toggle sound effects">🔊 SFX On</button><label style="background:#08101ccf;border-radius:12px;padding:7px">Volume <input id="soundVol" type="range" min="0" max="100" value="55" aria-label="Audio volume" style="vertical-align:middle;width:72px"></label>
+  <button id="pause">Pause</button>
+  <button id="reset">Restart</button><button id="emoteBtn" aria-expanded="false">💃 Emote</button>
+</div>
+<div id="status">20 runners • 5 RED chasers • Dance together!</div>
+<div id="emoteMenu"><strong>🎵 Choose your dance</strong><div id="danceButtons"></div><button id="stopDance">Stop dancing</button></div>
+<div id="mobile">
+  <div id="stick"><div id="nub"></div></div>
+  <div id="actions">
+    <button id="runBtn">HOLD RUN</button>
+    <button id="dashBtn">DASH</button>
+    <button id="jump">JUMP</button>
+  </div>
+</div>
+<div id="info">WASD / Arrows move • Space jump (press again near wall to wall hop) • Shift dash • Hold E to sprint • Emote: choose 1 of 5 dances</div>
+<div id="overlay">
+  <h1>🏷️ ULTIMATE TAG 3D</h1>
+  <h3>DIRECT GAME STUDIOS • GAME #88</h3>
+  <p>Tap JUMP to leap, DASH for a burst (5-second cooldown), or hold RUN to sprint using 50 stamina. You can dash whenever you're a runner. You are the blue runner! Escape five red chasers with twenty colorful runner bots. If a chaser tags you, you swap roles with that chaser. All characters have a Dash ability with a 5-second cooldown. Press Jump again near a wall while airborne to wall-hop. Bodies face movement direction.</p>
+  <label for="mapChoice" style="font-weight:800;display:block;margin:12px">🗺️ Choose a map</label><select id="mapChoice" style="font-size:17px;padding:10px;border-radius:10px;background:#172441;color:white;border:1px solid #8aa5d9;margin-bottom:12px"><option value="0">🌿 Parkour Gardens</option><option value="1">🏙️ Maze City</option><option value="2">🏰 Fortress Walls</option></select><button id="start">▶ PLAY GAME</button>
+  <p id="loading">Loading 3D engine… internet may be needed for first launch.</p>
+</div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
+
+const $ = id => document.getElementById(id);
+// Original procedural synth music. All tracks are generated inside the browser.
+const audio={ctx:null,music:true,sfx:true,volume:.55,nextBeat:0,beat:0,foot:0,track:"arena"};
+function initAudio(){
+  try{
+    audio.ctx ??= new (window.AudioContext||window.webkitAudioContext)();
+    if(audio.ctx.state==='suspended')audio.ctx.resume();
+  }catch(e){audio.ctx=null;}
+}
+function sound(freq=440,duration=.12,type='sine',gain=.25,delay=0,slide=1){
+  const ctx=audio.ctx;if(!ctx||ctx.state!=='running'||audio.volume<=0)return;
+  const t=Math.max(ctx.currentTime+.002,ctx.currentTime+delay);
+  const osc=ctx.createOscillator(),amp=ctx.createGain();
+  osc.type=type;
+  osc.frequency.setValueAtTime(Math.max(25,freq),t);
+  osc.frequency.exponentialRampToValueAtTime(Math.max(25,freq*slide),t+duration);
+  amp.gain.setValueAtTime(.0001,t);
+  amp.gain.exponentialRampToValueAtTime(Math.max(.00011,gain*audio.volume),t+.008);
+  amp.gain.exponentialRampToValueAtTime(.0001,t+duration);
+  osc.connect(amp);amp.connect(ctx.destination);
+  osc.start(t);osc.stop(t+duration+.018);
+}
+function note(n,oct=0){return 220*Math.pow(2,(n+12*oct)/12);}
+function thump(delay,g=.22){sound(135,.19,'sine',g,delay,.32);}
+function snare(delay,g=.11){sound(230,.10,'triangle',g,delay,.45);sound(850,.065,'square',g*.27,delay,1.5);}
+function hat(delay,g=.035){sound(3200,.032,'square',g,delay,.63);}
+function sfx(name){
+  if(!audio.sfx)return;
+  if(name==='jump'){sound(220,.28,'triangle',.3,0,2.6);sound(540,.13,'sine',.12,.08,1.5);}
+  if(name==='hop'){sound(170,.25,'sawtooth',.14,0,3);sound(850,.16,'sine',.16,.09,1.4);}
+  if(name==='dash'){sound(900,.29,'sawtooth',.12,0,.19);sound(170,.3,'triangle',.22,0,2.3);sound(1100,.12,'sine',.12,.13,.6);}
+  if(name==='tag'){sound(400,.23,'square',.14,0,.45);sound(700,.2,'triangle',.24,.07,.42);thump(.02,.2);}
+  if(name==='step')sound(85,.055,'triangle',.075,0,.6);
+  if(name==='dance'){[0,4,7,12].forEach((n,i)=>sound(note(n,1),.14,'triangle',.16,i*.085,1));}
+  if(name==='win'){[0,4,7,12,16,19].forEach((n,i)=>sound(note(n,1),.32,'triangle',.22,i*.12,1));}
+  if(name==='click')sound(620,.075,'sine',.11);
+}
+const tracks=[
+ {name:"Arena Rush",step:.19,lead:[0,7,12,7,3,10,7,5,0,7,15,12,10,7,3,-1],bass:[0,0,3,3,5,5,7,7],wave:'sawtooth'},
+ {name:"Victory Bounce",step:.215,lead:[0,4,7,12,7,4,12,16,7,12,16,19,16,12,7,4],bass:[0,5,7,5],wave:'triangle'},
+ {name:"Disco Steps",step:.205,lead:[12,-1,7,10,12,15,10,7,5,-1,8,12,15,12,10,8],bass:[0,0,5,7],wave:'square'},
+ {name:"Wave Dance",step:.24,lead:[7,9,12,16,14,12,9,7,5,7,9,12,9,7,5,-1],bass:[0,5,3,5],wave:'sine'},
+ {name:"Ninja Shuffle",step:.145,lead:[0,3,7,10,12,10,7,3,0,7,10,15,12,10,7,-1],bass:[0,3,5,3],wave:'sawtooth'},
+ {name:"Robot Pop",step:.175,lead:[0,12,7,-1,3,15,10,7,0,12,15,-1,7,10,3,-1],bass:[0,7,3,5],wave:'square'},
+ {name:"Breakin' Beat & Guitar",step:.135,lead:[0,-1,7,10,12,7,5,-1,3,7,10,15,12,10,7,3],bass:[0,0,5,3,7,7,5,3],wave:'sawtooth'}
+];
+function musicTick(){
+  const ctx=audio.ctx;if(!ctx||ctx.state!=='running')return;
+  if(!running||paused||over||!audio.music){audio.nextBeat=ctx.currentTime+.06;return;}
+  const dance=player && player.emoteTime>0 && player.emote>=0 && player.emote<6;
+  const newTrack=dance?'dance'+player.emote:'arena';
+  if(newTrack!==audio.track){
+    audio.track=newTrack;audio.beat=0;audio.nextBeat=ctx.currentTime+.03;
+  }
+  if(audio.nextBeat<ctx.currentTime-.15)audio.nextBeat=ctx.currentTime+.025;
+  const t=tracks[dance?player.emote+1:0];
+  let scheduled=0;
+  while(audio.nextBeat<ctx.currentTime+.14 && scheduled++<5){
+    const beat=audio.beat++,delay=Math.max(.003,audio.nextBeat-ctx.currentTime);
+    if(beat%4===0)thump(delay,dance && player.emote===5?.36:.26);
+    if(beat%4===2)snare(delay,dance && player.emote===5?.19:.12);
+    hat(delay,beat%2===0?.028:.017);
+    if(dance && player.emote===5 && beat%2===0){
+      // Guitar-like plucked chord: bright attack followed by a quick decay.
+      const chord=[0,3,7];
+      chord.forEach((n,i)=>sound(note(t.bass[Math.floor(beat/4)%t.bass.length]+n,1),.095,'sawtooth',.045,delay+i*.016,.78));
+    }
+    const sem=t.lead[beat%t.lead.length];
+    if(sem>=0){
+      sound(note(sem,1),t.step*.87,t.wave,dance?.095:.065,delay,1);
+      if(dance && beat%4===0)sound(note(sem,0),t.step*1.7,'sine',.07,delay,1);
+    }
+    if(beat%2===0){
+      const b=t.bass[Math.floor(beat/4)%t.bass.length];
+      sound(note(b,-1),t.step*1.65,'triangle',.17,delay,1);
+    }
+    audio.nextBeat+=t.step;
+  }
+}
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#94d8ff');
+scene.fog = new THREE.Fog('#94d8ff', 120, 260);
+const camera = new THREE.PerspectiveCamera(65, innerWidth / innerHeight, 0.1, 320);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.42;
+document.body.prepend(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0xe8f8ff,0x7da167,2.5));
+const sun = new THREE.DirectionalLight(0xfff2cd,3.7);
+sun.position.set(18,32,14); sun.castShadow = true;
+sun.shadow.mapSize.set(2048,2048);
+sun.shadow.bias=-0.00012;
+sun.shadow.normalBias=0.035;
+sun.shadow.radius=2.2;
+sun.shadow.camera.left = -160; sun.shadow.camera.right = 160;
+sun.shadow.camera.top = 160; sun.shadow.camera.bottom = -160;
+scene.add(sun);
+// Procedural sky shader with a real visible glowing sun and gentle atmospheric color.
+const skyUniforms={topColor:{value:new THREE.Color('#48b5ff')},horizonColor:{value:new THREE.Color('#d2f3ff')},sunDirection:{value:new THREE.Vector3(18,32,14).normalize()}};
+const sky=new THREE.Mesh(new THREE.SphereGeometry(270,48,32),new THREE.ShaderMaterial({
+  uniforms:skyUniforms,side:THREE.BackSide,depthWrite:false,fog:false,
+  vertexShader:`varying vec3 vSkyDir; void main(){vec4 wp=modelMatrix*vec4(position,1.0);vSkyDir=normalize(wp.xyz-cameraPosition);gl_Position=projectionMatrix*viewMatrix*wp;gl_Position.z=gl_Position.w;}`,
+  fragmentShader:`uniform vec3 topColor;uniform vec3 horizonColor;uniform vec3 sunDirection;varying vec3 vSkyDir;
+  void main(){float h=clamp(vSkyDir.y*0.8+0.3,0.,1.);vec3 sky=mix(horizonColor,topColor,smoothstep(0.,1.,h));
+  float dotSun=max(dot(normalize(vSkyDir),normalize(sunDirection)),0.);
+  float disc=smoothstep(0.9992,0.9997,dotSun);
+  float halo=pow(dotSun,48.)*.34+pow(dotSun,320.)*.33;
+  sky+=vec3(1.,.76,.39)*halo+vec3(1.,.96,.83)*disc*1.4;
+  gl_FragColor=vec4(sky,1.0);}`
+}));
+sky.frustumCulled=false;sky.renderOrder=-1000;scene.add(sky);
+const ambientBounce=new THREE.AmbientLight(0xffffff,.33);scene.add(ambientBounce);
+function mat(c){return new THREE.MeshStandardMaterial({color:c,roughness:.48,metalness:.035,emissive:new THREE.Color(c).multiplyScalar(.075)});}
+const worldHalf = 90;
+const ground = new THREE.Mesh(new THREE.BoxGeometry(worldHalf*2,1,worldHalf*2), mat('#72bf70'));
+ground.position.y = -0.5; ground.receiveShadow = true; scene.add(ground);
+const grid = new THREE.GridHelper(worldHalf*2, 90, 0x70a876, 0x91cf8c); grid.position.y = 0.012; scene.add(grid);
+
+const obstacles=[];
+const obstacleMeshes=[];
+let currentMap=0;
+const maps=[
+ {ground:'#72bf70',fog:'#94d8ff',blocks:[
+ [-26,-18,8,10,5,'#ffd166'],[20,-24,8,8,7,'#c4a1ff'],[25,18,10,6,4.8,'#ff9bac'],[-22,26,8,10,5,'#7ce5f2'],
+ [0,-30,16,4,4,'#fdac67'],[-8,24,12,6,4,'#91c8ff'],[32,2,4,14,5,'#fff0a3'],[-36,0,4,14,5,'#a2f1c9'],
+ [-40,-35,12,8,4,'#ffbf69'],[42,-15,10,8,5,'#b5ead7'],[-18,40,14,6,4.5,'#ffc6ff'],[8,42,10,10,6,'#bee1e6']]},
+ {ground:'#8f9eab',fog:'#bedbec',blocks:[
+ [-35,-18,5,35,9,'#7c8aa9'],[-16,-10,5,29,7,'#eab596'],[3,-23,5,28,11,'#9e9dd4'],[25,-16,5,33,7,'#b4d5d4'],
+ [-31,31,35,5,7,'#a7b5d8'],[14,29,31,5,8,'#ffbf69'],[-13,8,5,14,5,'#deb3b3'],[37,7,5,18,6,'#abc5eb'],
+ [-45,-42,12,12,4,'#a8b9cf'],[45,44,13,10,5,'#b6b9e2'],[0,48,10,10,3,'#f1d29d']]},
+ {ground:'#c3ac86',fog:'#e9d8b7',blocks:[
+ [-32,0,6,36,10,'#7d8194'],[32,0,6,36,10,'#7d8194'],[0,-36,41,6,9,'#8c89a1'],[0,36,41,6,9,'#8c89a1'],
+ [-15,-14,9,9,6,'#d0a37b'],[15,14,9,9,6,'#d0a37b'],[-14,16,4,20,5,'#b8a38e'],[15,-13,4,22,5,'#b8a38e'],
+ [-48,-46,12,8,5,'#e6c49f'],[48,46,12,8,5,'#e6c49f'],[0,0,7,7,8,'#d8ab85'],[40,-35,6,15,4,'#d6b18f'],[-40,37,8,10,5,'#c7a58e']]}
+];
+function buildMap(index){
+ currentMap=index;
+ for(const mesh of obstacleMeshes){scene.remove(mesh);mesh.geometry.dispose();mesh.material.dispose();}
+ obstacleMeshes.length=0; obstacles.length=0;
+ const theme=maps[index];ground.material.color.set(theme.ground);scene.background.set(theme.fog);scene.fog.color.set(theme.fog);
+ skyUniforms.topColor.value.set(index===2?'#87caff':index===1?'#60bdf9':'#43b8ff');
+ skyUniforms.horizonColor.value.set(index===2?'#ffe8c1':index===1?'#e0f5ff':'#d4f5ff');
+ const data=theme.blocks.map(x=>x.slice());
+ if(index===0){
+  for(let i=0;i<26;i++){
+   const a=i*2.399963,r=42+(i%4)*9,x=Math.cos(a)*r,z=Math.sin(a)*r;
+   const w=3.5+(i%3),d=3.5+((i+1)%3),h=2.6+(i%4)*.7;
+   if(Math.hypot(x,z)>25&&data.every(o=>Math.hypot(x-o[0],z-o[1])>9))data.push([x,z,w,d,h,['#ffdf91','#c2b7ff','#8fe9eb','#ffb6c7'][i%4]]);
+  }
+ }
+ for(const [x,z,w,d,h,col] of data){
+  const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(col));
+  mesh.position.set(x,h/2,z);mesh.castShadow=true;mesh.receiveShadow=true;scene.add(mesh);
+  obstacleMeshes.push(mesh);obstacles.push({x,z,w,d,h});
+ }
+}
+buildMap(0);
+for(let i=0;i<56;i++){
+  const a=i*2.2,r=75+8*(i%3===0),x=Math.cos(a)*r,z=Math.sin(a)*r;
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(.45,.55,2.8,8), mat('#7a4c26'));
+  trunk.position.set(x,1.4,z); trunk.castShadow = true; scene.add(trunk);
+  const leaves = new THREE.Mesh(new THREE.ConeGeometry(1.8,4.2,6), mat(i%2?'#3f9460':'#237a4f'));
+  leaves.position.set(x,4,z); scene.add(leaves);
+}
+
+const sphere = new THREE.SphereGeometry(1,16,12);
+const bodygeo = new THREE.CapsuleGeometry(.5,.86,5,12);
+
+function makeChar(color,x,z,isHunter=false, isPlayer=false){
+  const root = new THREE.Group(); scene.add(root); root.position.set(x,0,z);
+  const torso = new THREE.Mesh(bodygeo, mat('#090c14')); torso.position.y = 1.18; torso.castShadow = true; root.add(torso);
+
+  const head = new THREE.Group(); head.position.y = 2.38; root.add(head);
+  const face = new THREE.Mesh(sphere, mat('#040609')); face.scale.set(.84,.8,.76); face.castShadow = true; head.add(face);
+  const eyeMat = new THREE.MeshBasicMaterial({color:'#ffffff'});
+  const eyes=[];
+  // Dancing uses happy eyes only: no mouth and no blush.
+  for(const side of [-1,1]){
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(.12,16,12), eyeMat);
+    eye.position.set(side*.28,.08,.69);
+    eye.scale.set(1,1.25,.6);
+    eye.userData.side=side;
+    head.add(eye);
+    eyes.push(eye);
+  }
+  // no mouth, no blush, no top-head hair/crown piece
+
+  const scarfPivot = new THREE.Group(); scarfPivot.position.set(0,1.82,0); root.add(scarfPivot);
+  const scarf = new THREE.Mesh(new THREE.TorusGeometry(.58,.17,10,26), mat(color)); scarf.rotation.x = Math.PI/2; scarfPivot.add(scarf);
+  const tail = new THREE.Mesh(new THREE.CapsuleGeometry(.15,.8,4,10), mat(color)); tail.rotation.x = Math.PI/2.45; tail.position.set(0,-.13,-.72); scarfPivot.add(tail);
+
+  const limbs=[];
+  for(const side of [-1,1]){
+    const armPivot = new THREE.Group(); armPivot.position.set(side*.58,1.58,0); root.add(armPivot);
+    const arm = new THREE.Mesh(new THREE.CapsuleGeometry(.15,.74,4,10), mat('#080a10')); arm.position.y = -.46; arm.castShadow = true; armPivot.add(arm);
+    const legPivot = new THREE.Group(); legPivot.position.set(side*.28,.8,0); root.add(legPivot);
+    const leg = new THREE.Mesh(new THREE.CapsuleGeometry(.18,.7,4,10), mat('#090c14')); leg.position.y = -.42; leg.castShadow = true; legPivot.add(leg);
+    limbs.push({armPivot, legPivot, side});
+  }
+  // Independent body pivot allows real ground-level shoulder rolls (not upright spinning).
+  const rig=new THREE.Group();
+  rig.position.y=1.25;
+  const parts=[...root.children];
+  root.add(rig);
+  for(const part of parts){
+    part.position.y-=1.25;
+    rig.add(part);
+  }
+  return {
+    root, rig, head, scarf, scarfPivot, tail, limbs, eyes,
+    x,z,color,isHunter,isPlayer,y:0,vy:0,ang:0,t:Math.random()*10,
+    velX:0, velZ:0, runCycle:0, dashCooldown:0, dashTime:0,
+    dashDirX:0, dashDirZ:0, jumpFlash:0, wasAirborne:false, dashSpark:0, aiOffset:Math.random()*10, wallHop:0, hopUsed:false, lastJump:-10, tagCooldown:0, ghostTime:0, ghostOpacity:1, escapeTime:0, escapeX:0, escapeZ:0, stuckTime:0, prevX:x, prevZ:z, stamina:50, sprinting:false, sprintRest:0, emote:-1, emoteTime:0, emoteCooldown:2+Math.random()*9, groundY:0, aiHopTimer:0, dodgeSign:Math.random()<.5?-1:1
+  };
+}
+
+// A newly tagged chaser is visible as a pale ghost for exactly two seconds.
+// It cannot tag or collide with players until its ghost timer runs out.
+function setGhostOpacity(c, alpha){
+  if(Math.abs(c.ghostOpacity-alpha)<.005)return;
+  c.ghostOpacity=alpha;
+  c.root.traverse(obj=>{
+    if(!obj.isMesh)return;
+    obj.material.transparent=alpha<.999;
+    obj.material.opacity=alpha;
+    obj.material.depthWrite=alpha>=.999;
+    obj.castShadow=alpha>=.999;
+  });
+}
+
+function setRole(c,hunter){
+  c.isHunter = hunter;
+  const shade = hunter ? '#f32338' : c.color;
+  c.scarf.material.color.set(shade);
+  c.tail.material.color.set(shade);
+}
+
+let globalChaserSlowTime=0;
+let chars=[], player, score=0, remaining=180, running=false, over=false, paused=false, keys={}, touch={x:0,y:0}, orbit=0, cameraPitch=0.55;
+const effects=[];
+let sprintHeld=false;
+const runnerColors=['#30e57f','#ffde32','#b66cfd','#ff9a33','#ff55b9','#3ce7ee','#8df234','#fa70ab','#e3a2fa','#f5ec64','#63c5ff','#f97558','#a3ffcf','#bcb6fa','#ffba6e','#6fe18c','#e787fc','#9de6ff','#ffd56a','#dafa7d'];
+
+function reset(){
+  clearEffects();
+  for(const c of chars) scene.remove(c.root);
+  chars=[];
+  // Two separate safe spawn zones, with spacing and obstacle checks.
+  const free=(x,z,minGap=4.5)=>{
+    if(Math.abs(x)>worldHalf-4||Math.abs(z)>worldHalf-4)return false;
+    for(const o of obstacles){
+      if(Math.abs(x-o.x)<o.w/2+2.4 && Math.abs(z-o.z)<o.d/2+2.4)return false;
+    }
+    return chars.every(c=>Math.hypot(c.x-x,c.z-z)>minGap);
+  };
+  const spawn=(color,isHunter,isPlayer,index)=>{
+    const baseX=isHunter?58:-52;
+    // Sweep nearby slots in a deterministic pattern to avoid overlapping characters.
+    for(let j=0;j<300;j++){
+      const col=j%6,row=Math.floor(j/6);
+      const x=baseX+(col-2.5)*6.7;
+      const z=-58+row*7.5;
+      if(free(x,z)){
+        const c=makeChar(color,x,z,false,isPlayer);
+        chars.push(c);
+        if(isHunter)setRole(c,true);
+        return c;
+      }
+    }
+    throw new Error('Could not find an open spawn point');
+  };
+  player=spawn('#06a9f9',false,true,0);
+  for(let i=0;i<20;i++)spawn(runnerColors[i],false,false,i+1);
+  for(let i=0;i<5;i++)spawn('#21d2da',true,false,i);
+  separateCharacters(3.3,6);
+  sprintHeld=false; keys={}; touch.x=touch.y=0; score=0; remaining=180; over=false; paused=false;
+  $('pause').textContent='Pause';
+  $('status').textContent='Runners start far away from 5 chasers. Tag swaps have protection from instant re-tags!';
+  syncHud();
+}
+
+function syncHud(){
+  $('clock').textContent='⏱ '+Math.floor(Math.max(0,remaining)/60)+':'+String(Math.ceil(Math.max(0,remaining)%60)).padStart(2,'0');
+  $('score').textContent='⭐ '+Math.floor(score);
+  $('role').textContent = (player.isHunter ? '🔴 Chaser' : '💙 Runner')+' • 🔴 '+chars.filter(c=>c.isHunter).length+'/5';
+  $('staminaFill').style.width = (player.isHunter?0:player.stamina/50*100)+'%';
+  $('staminaValue').textContent = player.isHunter ? 'Chaser: unlimited chase' : '🏃 Stamina '+Math.ceil(player.stamina)+'/50'+(player.sprinting?' • SPRINT!':'');
+  if(player.isHunter){
+    $('dashHud').textContent = player.dashCooldown<=0 ? '🔴 Chaser Dash Ready' : '🔴 Dash '+player.dashCooldown.toFixed(1)+'s';
+  }else if(player.dashCooldown<=0){
+    $('dashHud').textContent = '⚡ Dash Ready';
+  }else{
+    $('dashHud').textContent = '⚡ Dash '+player.dashCooldown.toFixed(1)+'s';
+  }
+}
+reset();
+
+function nearWall(c,reach=1.65){
+  let best=null, bestD=Infinity;
+  for(const o of obstacles){
+    if(c.y>o.h+0.8) continue;
+    const cx=THREE.MathUtils.clamp(c.x,o.x-o.w/2,o.x+o.w/2);
+    const cz=THREE.MathUtils.clamp(c.z,o.z-o.d/2,o.z+o.d/2);
+    const dx=c.x-cx,dz=c.z-cz,d=Math.hypot(dx,dz);
+    if(d<reach && d<bestD){
+      let nx=dx/(d||1),nz=dz/(d||1);
+      if(d<.0001){nx=Math.abs(c.x-o.x)>Math.abs(c.z-o.z)?Math.sign(c.x-o.x)||1:0;nz=nx?0:Math.sign(c.z-o.z)||1;}
+      best={nx,nz,ob:o};bestD=d;
+    }
+  }
+  if(Math.abs(c.x)>worldHalf-2.1) return {nx:-Math.sign(c.x),nz:0};
+  if(Math.abs(c.z)>worldHalf-2.1) return {nx:0,nz:-Math.sign(c.z)};
+  return best;
+}
+function jumpChar(c){
+  if(c.y<=(c.groundY||0)+.12){ c.y=(c.groundY||0)+.03;c.vy=12.5;c.hopUsed=false;c.lastJump=c.t;if(c.isPlayer)sfx('jump');return 'jump'; }
+  const wall=nearWall(c,2.2);
+  if(wall&&!c.hopUsed && c.t-c.lastJump<1.4){
+    c.hopUsed=true;c.wallHop=.55;c.vy=14;
+    c.dashTime=0;
+    c.dashDirX=wall.nx;c.dashDirZ=wall.nz;
+    c.x+=wall.nx*.22;c.z+=wall.nz*.22;
+    pulse(c.x,c.z,c.color,'land');
+    if(c.isPlayer)sfx('hop');
+    return 'wallhop';
+  }
+  return 'none';
+}
+// AI probes a lookahead corridor and steers toward a safe corner before touching a wall.
+function pathClear(x1,z1,x2,z2,pad=1.5){
+  for(const o of obstacles){
+    const left=o.x-o.w/2-pad,right=o.x+o.w/2+pad, bottom=o.z-o.d/2-pad,top=o.z+o.d/2+pad;
+    // Ray vs expanded rectangle in XZ.
+    const dx=x2-x1,dz=z2-z1;
+    let lo=0,hi=1;
+    for(const [p,q] of [[-dx,x1-left],[dx,right-x1],[-dz,z1-bottom],[dz,top-z1]]){
+      if(Math.abs(p)<1e-8){if(q<0){lo=2;break;}}else{
+        const t=q/p;
+        if(p<0)lo=Math.max(lo,t);else hi=Math.min(hi,t);
+      }
+    }
+    if(lo<=hi)return false;
+  }
+  return true;
+}
+function smartPursuit(c,target){
+  // Stable visibility-graph path around every block: choose a reachable next corner.
+  const tx=THREE.MathUtils.clamp(target.x+(target.velX||0)*.22,-worldHalf+3,worldHalf-3);
+  const tz=THREE.MathUtils.clamp(target.z+(target.velZ||0)*.22,-worldHalf+3,worldHalf-3);
+  const aimX=pathClear(c.x,c.z,tx,tz)?tx:target.x;
+  const aimZ=pathClear(c.x,c.z,tx,tz)?tz:target.z;
+  if(pathClear(c.x,c.z,aimX,aimZ,1.05)){c.route=null;return [aimX-c.x,aimZ-c.z];}
+  const nodes=[[c.x,c.z]];
+  for(const o of obstacles)for(const sx of [-1,1])for(const sz of [-1,1]){
+    const x=o.x+sx*(o.w/2+2),z=o.z+sz*(o.d/2+2);
+    if(Math.abs(x)<worldHalf-2 && Math.abs(z)<worldHalf-2)nodes.push([x,z]);
+  }
+  nodes.push([target.x,target.z]);
+  const n=nodes.length,goal=n-1,cost=Array(n).fill(Infinity),parent=Array(n).fill(-1),used=Array(n).fill(false);
+  cost[0]=0;
+  for(let count=0;count<n;count++){
+    let u=-1;
+    for(let i=0;i<n;i++)if(!used[i]&&(u<0||cost[i]<cost[u]))u=i;
+    if(u<0||!isFinite(cost[u])||u===goal)break;
+    used[u]=true;
+    for(let v=1;v<n;v++){
+      if(used[v])continue;
+      const d=Math.hypot(nodes[v][0]-nodes[u][0],nodes[v][1]-nodes[u][1]);
+      if(cost[u]+d>=cost[v]||!pathClear(...nodes[u],...nodes[v],.8))continue;
+      cost[v]=cost[u]+d;parent[v]=u;
+    }
+  }
+  if(parent[goal]>=0){
+    let next=goal;
+    while(parent[next]>0)next=parent[next];
+    const [x,z]=nodes[next];return [x-c.x,z-c.z];
+  }
+  // If corner routing is impossible, slide laterally rather than jittering into the wall.
+  const wall=nearWall(c,3.5);
+  if(wall)return [wall.nz*8+wall.nx*2,-wall.nx*8+wall.nz*2];
+  return [target.x-c.x,target.z-c.z];
+}
+function steerAI(c,vx,vz){
+  let len=Math.hypot(vx,vz);if(len<.001)return [0,0];
+  let ux=vx/len,uz=vz/len;
+  let closest=null,dist=Infinity;
+  for(const o of obstacles){
+    if(c.y>o.h+.5)continue;
+    const pad=2.5, minx=o.x-o.w/2-pad,maxx=o.x+o.w/2+pad,minz=o.z-o.d/2-pad,maxz=o.z+o.d/2+pad;
+    // Test several points down the intended route for an approaching obstacle.
+    for(const step of [2.5,4.5,7,10]){
+      const px=c.x+ux*step,pz=c.z+uz*step;
+      if(px>minx&&px<maxx&&pz>minz&&pz<maxz&&step<dist){dist=step;closest=o;}
+    }
+  }
+  if(closest){
+    const o=closest,offset=3.5;
+    const corners=[
+      [o.x-o.w/2-offset,o.z-o.d/2-offset],
+      [o.x-o.w/2-offset,o.z+o.d/2+offset],
+      [o.x+o.w/2+offset,o.z-o.d/2-offset],
+      [o.x+o.w/2+offset,o.z+o.d/2+offset]
+    ];
+    let best=null,score=Infinity;
+    for(const [tx,tz] of corners){
+      const dx=tx-c.x,dz=tz-c.z,d=Math.hypot(dx,dz);
+      const alignment=(dx*ux+dz*uz)/(d||1);
+      // Favor reachable near corners that still progress toward the target.
+      const val=d-alignment*3;
+      if(val<score){score=val;best=[dx,dz];}
+    }
+    if(best){const weight=dist<5?1:.8;vx=best[0]*weight+ux*(1-weight);vz=best[1]*weight+uz*(1-weight);}
+  }
+  if(Math.abs(c.x)>worldHalf-8)vx+=-Math.sign(c.x)*12;
+  if(Math.abs(c.z)>worldHalf-8)vz+=-Math.sign(c.z)*12;
+  return [vx,vz];
+}
+function slide(c,dx,dz){
+  let nx = THREE.MathUtils.clamp(c.x+dx, -worldHalf+1.2, worldHalf-1.2);
+  let nz = THREE.MathUtils.clamp(c.z+dz, -worldHalf+1.2, worldHalf-1.2);
+  for(const o of obstacles){
+    const clX = THREE.MathUtils.clamp(nx,o.x-o.w/2,o.x+o.w/2), clZ = THREE.MathUtils.clamp(nz,o.z-o.d/2,o.z+o.d/2);
+    if((nx-clX)**2 + (nz-clZ)**2 < .78**2 && c.y < o.h-.12){ nx = c.x; break; }
+  }
+  for(const o of obstacles){
+    const clX = THREE.MathUtils.clamp(nx,o.x-o.w/2,o.x+o.w/2), clZ = THREE.MathUtils.clamp(nz,o.z-o.d/2,o.z+o.d/2);
+    if((nx-clX)**2 + (nz-clZ)**2 < .78**2 && c.y < o.h-.12){ nz = c.z; break; }
+  }
+  c.x=nx; c.z=nz;
+}
+
+// Keep every character from visually clipping into another. This is
+// separate from tagging: runners can still get close enough to be tagged.
+function openCharacterSpot(x,z,y){
+  if(x < -worldHalf+1.4 || x > worldHalf-1.4 || z < -worldHalf+1.4 || z > worldHalf-1.4) return false;
+  for(const o of obstacles){
+    if(y >= o.h-.08) continue;
+    const closestX=THREE.MathUtils.clamp(x,o.x-o.w/2,o.x+o.w/2);
+    const closestZ=THREE.MathUtils.clamp(z,o.z-o.d/2,o.z+o.d/2);
+    if(Math.hypot(x-closestX,z-closestZ)<.86) return false;
+  }
+  return true;
+}
+function separateCharacters(minDistance=2.25, passes=3){
+  for(let pass=0;pass<passes;pass++){
+    for(let i=0;i<chars.length;i++) for(let j=i+1;j<chars.length;j++){
+      const a=chars[i],b=chars[j];
+      if(Math.abs(a.y-b.y)>1.8 || a.ghostTime>0 || b.ghostTime>0) continue;
+      let dx=b.x-a.x,dz=b.z-a.z;
+      let d=Math.hypot(dx,dz);
+      if(d>=minDistance) continue;
+      if(d<.0001){
+        const angle=(i*17+j*29)*2.399963;
+        dx=Math.cos(angle); dz=Math.sin(angle);d=1;
+      }
+      const nx=dx/d,nz=dz/d;
+      const push=Math.min(2.6,(minDistance-d)/2+.001);
+      const ax=a.x-nx*push,az=a.z-nz*push;
+      const bx=b.x+nx*push,bz=b.z+nz*push;
+      const goodA=openCharacterSpot(ax,az,a.y);
+      const goodB=openCharacterSpot(bx,bz,b.y);
+      if(goodA&&goodB){a.x=ax;a.z=az;b.x=bx;b.z=bz;}
+      else if(goodA){a.x=ax;a.z=az;}
+      else if(goodB){b.x=bx;b.z=bz;}
+      else{
+        // Try sidestepping in open space rather than piling up at walls.
+        for(const angle of [Math.PI/2,-Math.PI/2,Math.PI]){
+          const tx=Math.cos(angle)*nx-Math.sin(angle)*nz;
+          const tz=Math.sin(angle)*nx+Math.cos(angle)*nz;
+          if(openCharacterSpot(b.x+tx*push*2,b.z+tz*push*2,b.y)){
+            b.x+=tx*push*2;b.z+=tz*push*2;break;
+          }
+        }
+      }
+    }
+  }
+  for(const c of chars){c.root.position.x=c.x;c.root.position.z=c.z;}
+}
+
+function triggerDash(c, dirX, dirZ){
+  if(c.dashCooldown>0) return false;
+  let len = Math.hypot(dirX,dirZ);
+  if(len < 0.001){
+    const hunter = chars.find(x=>x.isHunter);
+    if(hunter){
+      dirX = c.x - hunter.x;
+      dirZ = c.z - hunter.z;
+      len = Math.hypot(dirX,dirZ);
+    }
+  }
+  if(len < 0.001){
+    dirX = Math.sin(c.ang);
+    dirZ = Math.cos(c.ang);
+    len = Math.hypot(dirX,dirZ);
+  }
+  if(len<0.001) return false;
+  if(c.isPlayer || Math.random()<.08)sfx('dash');
+  c.dashCooldown = 5;
+  c.dashTime = 0.56;
+  c.dashSpark = 0;
+  c.dashDirX = dirX/len;
+  c.dashDirZ = dirZ/len;
+  return true;
+}
+
+function pulse(x,z,color,kind){
+  const material=new THREE.MeshBasicMaterial({color,transparent:true,opacity:.75,depthWrite:false});
+  const mesh=new THREE.Mesh(new THREE.TorusGeometry(kind==='dash'?.7:.4,.065,6,24),material);
+  mesh.rotation.x=-Math.PI/2;mesh.position.set(x,.12,z);scene.add(mesh);
+  effects.push({mesh,age:0,life:kind==='dash'?.36:.55});
+}
+function updateEffects(dt){
+  for(let i=effects.length-1;i>=0;i--){
+    const e=effects[i];e.age+=dt;
+    const t=e.age/e.life;e.mesh.scale.setScalar(1+t*2.8);
+    e.mesh.material.opacity=Math.max(0,.72*(1-t));
+    if(t>=1){scene.remove(e.mesh);e.mesh.geometry.dispose();e.mesh.material.dispose();effects.splice(i,1);}
+  }
+}
+function clearEffects(){for(const e of effects){scene.remove(e.mesh);e.mesh.geometry.dispose();e.mesh.material.dispose();}effects.length=0;}
+function move(c,vx,vz,dt){
+  const wasInAir = c.y>(c.groundY||0)+.02;
+  c.dashCooldown = Math.max(0, c.dashCooldown-dt);
+  c.dashTime = Math.max(0, c.dashTime-dt);
+  c.wallHop=Math.max(0,c.wallHop-dt);
+  const movingInput = Math.hypot(vx,vz)>0.09;
+  const wantsSprint = c.isPlayer ? (sprintHeld || !!keys.e || !!keys.E) : !!c.wantSprint;
+  c.sprinting = !c.isHunter && wantsSprint && c.stamina>0.15 && c.sprintRest<=0 && movingInput && c.dashTime<=0;
+  if(c.sprinting){
+    c.stamina=Math.max(0,c.stamina-15*dt);
+    if(c.stamina<0.15){c.sprinting=false;c.sprintRest=0.8;}
+  } else if(c.dashTime<=0){
+    c.stamina=Math.min(50,c.stamina+(movingInput?8:12)*dt);
+  }
+  c.sprintRest=Math.max(0,c.sprintRest-dt);
+  let speedMul = c.isHunter ? 11.8 : (c.sprinting ? 15.4 : 7.1);
+  if(c.dashTime>0) speedMul = 29;
+  // AI chasers slow for two seconds after a tag. The human player never slows
+  // when becoming the new chaser, even during the ghost/protection window.
+  if(c.isHunter && c!==player && (globalChaserSlowTime>0 || c.ghostTime>0)){
+    speedMul=3.7;
+    c.dashTime=0;
+    c.wallHop=0;
+  }
+  let moveX = vx, moveZ = vz;
+  const size = Math.hypot(moveX,moveZ);
+  if(c.wallHop>0){moveX=c.dashDirX;moveZ=c.dashDirZ;speedMul=12;}
+  else if(c.dashTime>0){ moveX = c.dashDirX; moveZ = c.dashDirZ; }
+  else if(size>.01){ moveX/=size; moveZ/=size; }
+
+  c.velX=0;c.velZ=0;
+  if(Math.hypot(moveX,moveZ)>.01){
+    const oldX=c.x,oldZ=c.z;
+    slide(c, moveX*dt*speedMul, moveZ*dt*speedMul);
+    c.velX=(c.x-oldX)/Math.max(dt,0.001); c.velZ=(c.z-oldZ)/Math.max(dt,0.001);
+    const target = Math.atan2(moveX,moveZ);
+    c.ang += Math.atan2(Math.sin(target-c.ang), Math.cos(target-c.ang))*Math.min(1,dt*(c.dashTime>0?24:14));
+    c.root.rotation.y = c.ang;
+  }
+  const oldY=c.y;
+  c.vy-=23*dt;
+  let nextY=c.y+c.vy*dt;
+  // Obstacles are real solid platforms: land on their visible top faces.
+  let surface=0;
+  for(const o of obstacles){
+    const onTop=Math.abs(c.x-o.x)<=o.w/2+.42 && Math.abs(c.z-o.z)<=o.d/2+.42;
+    if(onTop && oldY>=o.h-.13 && nextY<=o.h && c.vy<=0)surface=Math.max(surface,o.h);
+    else if(onTop && Math.abs(oldY-o.h)<.12 && c.vy<=0)surface=Math.max(surface,o.h);
+  }
+  nextY=Math.max(surface,nextY,0);
+  if(nextY===surface && c.vy<=0)c.vy=0;
+  c.y=nextY;
+  c.groundY=surface;
+  if(c.vy===0)c.hopUsed=false;
+  if(wasInAir && c.vy===0){c.jumpFlash=.2;pulse(c.x,c.z,c.color,'land');}
+  c.jumpFlash=Math.max(0,c.jumpFlash-dt);
+  if(c.dashTime>0){c.dashSpark+=dt;if(c.dashSpark>.075){c.dashSpark=0;pulse(c.x,c.z,c.color,'dash');}}
+
+  c.root.position.set(c.x, c.y + Math.sin(c.t*11)*.04*((size>.05||c.dashTime>0)?1:0), c.z);
+  c.t += dt;
+  c.emoteTime=Math.max(0,c.emoteTime-dt);
+  c.emoteCooldown=Math.max(0,c.emoteCooldown-dt);
+
+  const inAir = c.y > (c.groundY||0)+0.02;
+  const dashing = c.dashTime>0;
+  const moving = size>.05 || dashing;
+  const power = moving?1:0;
+  c.runCycle += dt*(dashing?25:c.sprinting?22:moving?15:3.5);
+  const rising = inAir && c.vy>0;
+  const fall = inAir && !rising;
+  const swing = Math.sin(c.runCycle);
+  for(const limb of c.limbs){
+    const {armPivot,legPivot,side}=limb;
+    if(dashing){
+      // Ninja-run: both arms trailing, legs pumping rapidly.
+      armPivot.rotation.x=1.65+Math.sin(c.runCycle*1.15)*.19*side;
+      armPivot.rotation.z=side*.32;
+      legPivot.rotation.x=Math.sin(c.runCycle*1.65)*1.25*side;
+      legPivot.rotation.z=side*.10;
+    }else if(c.wallHop>0){
+      armPivot.rotation.x=side===1?-2.5:1.1;armPivot.rotation.z=side*.48;
+      legPivot.rotation.x=side===1?1.3:-.9;legPivot.rotation.z=side*.2;
+    }else if(rising){
+      armPivot.rotation.x=-2.45;
+      armPivot.rotation.z=side*.32;
+      legPivot.rotation.x=.9;
+      legPivot.rotation.z=side*.19;
+    }else if(fall){
+      armPivot.rotation.x=-.65;
+      armPivot.rotation.z=side*.8;
+      legPivot.rotation.x=-.2;
+      legPivot.rotation.z=side*.3;
+    }else if(c.sprinting){
+      armPivot.rotation.x=1.32+Math.sin(c.runCycle)*.22*side;
+      armPivot.rotation.z=side*.18;
+      legPivot.rotation.x=-swing*1.48*side;
+      legPivot.rotation.z=side*.07;
+    }else{
+      armPivot.rotation.x=swing*.98*side*power;
+      armPivot.rotation.z=0;
+      legPivot.rotation.x=-swing*1.12*side*power;
+      legPivot.rotation.z=0;
+    }
+  }
+  if(c.wallHop>0){
+    c.root.rotation.x=-.3;c.root.rotation.z=Math.sin(c.t*16)*.23;
+    c.head.rotation.x=-.18;c.scarfPivot.rotation.x=-.55;
+    c.tail.rotation.x=Math.PI/2.45+.65;
+  }else if(dashing){
+    const wobble=Math.sin(c.t*29)*.055;
+    c.root.rotation.x=-.53+wobble;
+    c.root.rotation.z=Math.sin(c.t*16)*.035;
+    c.head.rotation.x=.3;
+    c.head.rotation.z=0;
+    c.scarfPivot.rotation.x=-.7+Math.sin(c.t*26)*.1;
+    c.scarfPivot.rotation.y=Math.sin(c.t*19)*.22;
+    c.tail.rotation.x=Math.PI/2.45+.9+Math.sin(c.t*22)*.2;
+  }else if(inAir){
+    c.root.rotation.x=rising?.14:-.18;
+    c.root.rotation.z=0;
+    c.head.rotation.x=rising?-.1:.1;
+    c.head.rotation.z=0;
+    c.scarfPivot.rotation.x=rising?-.05:-.35;
+    c.scarfPivot.rotation.y=Math.sin(c.t*9)*.1;
+    c.tail.rotation.x=Math.PI/2.45+Math.sin(c.t*13)*.24;
+  }else{
+    c.root.rotation.x=c.sprinting?-.39:(c.jumpFlash>0?.18*(c.jumpFlash/.2):0);
+    c.root.rotation.z=0;
+    c.head.rotation.x=0;
+    c.head.rotation.z=swing*.05*power;
+    c.scarfPivot.rotation.x=-.12-Math.sin(c.runCycle*1.4)*.24*power;
+    c.scarfPivot.rotation.y=Math.sin(c.t*6)*.18;
+    c.tail.rotation.x=Math.PI/2.45+Math.sin(c.t*9)*.33*power;
+  }
+  // Restore the standing skeleton after every emote frame.
+  c.rig.quaternion.identity();
+  const happy=c.emoteTime>0;
+  for(const eye of c.eyes){
+    const side=eye.userData.side||1;
+    eye.scale.x=happy ? 1.18 : 1;
+    eye.scale.y=happy ? .22 + .04*Math.sin(c.t*10) : 1.25;
+    eye.scale.z=.6;
+    eye.position.y=happy ? .16 : .08;
+    eye.rotation.z=happy ? (-0.42*side) : 0;
+  }
+  if(c.emoteTime>0){
+    const t=c.t, beat=Math.sin(t*10), wave=Math.sin(t*6), kind=c.emote;
+    c.root.rotation.x=kind===3?Math.sin(t*7)*.34:0;
+    c.root.rotation.z=kind===2?Math.sin(t*6)*.33:kind===4?Math.sin(t*9)*.2:0;
+    c.head.rotation.z=Math.sin(t*7)*.14;
+    c.scarfPivot.rotation.y=wave*.25;
+    const [left,right]=c.limbs;
+    if(kind===0){left.armPivot.rotation.x=-2.2;right.armPivot.rotation.x=-2.2;left.legPivot.rotation.x=beat*.6;right.legPivot.rotation.x=-beat*.6;}
+    else if(kind===1){left.armPivot.rotation.x=-1.5+beat*.6;right.armPivot.rotation.x=1.5-beat*.6;left.legPivot.rotation.x=wave*.8;right.legPivot.rotation.x=-wave*.8;}
+    else if(kind===2){left.armPivot.rotation.z=-1.25;right.armPivot.rotation.z=1.25;left.armPivot.rotation.x=beat;right.armPivot.rotation.x=-beat;left.legPivot.rotation.x=beat*.25;right.legPivot.rotation.x=-beat*.25;}
+    else if(kind===3){left.armPivot.rotation.x=-1.6;right.armPivot.rotation.x=-1.6;left.legPivot.rotation.x=beat*1.1;right.legPivot.rotation.x=-beat*1.1;}
+    else if(kind===5){
+      // Lower, clearer breakin': body dropped near the floor with an obvious spin.
+      const spin=t*14.0;
+      const kick=Math.sin(t*16);
+      const sway=Math.cos(t*8);
+      // Spin the whole dancer while keeping the body laid down low.
+      c.root.rotation.x=0;
+      c.root.rotation.z=0;
+      c.root.rotation.y=spin;
+      c.root.position.y=c.groundY + .12 + Math.abs(Math.sin(t*14))*.025;
+      // Lay the body down harder toward the floor.
+      c.rig.rotation.x=.22*sway;
+      c.rig.rotation.y=0;
+      c.rig.rotation.z=1.56;
+      c.head.rotation.x=-.22;
+      c.head.rotation.z=.06*sway;
+      c.scarfPivot.rotation.x=-.62 + Math.sin(t*16)*.08;
+      c.scarfPivot.rotation.y=Math.sin(t*18)*.45;
+      // Support pose with one arm bracing and one arm opening outward.
+      left.armPivot.rotation.x=-2.0;
+      right.armPivot.rotation.x=-1.1;
+      left.armPivot.rotation.z=-1.25;
+      right.armPivot.rotation.z=1.2;
+      // Big scissor legs for a real breakin' spin silhouette.
+      left.legPivot.rotation.x=.1 + kick*1.35;
+      right.legPivot.rotation.x=.1 - kick*1.35;
+      left.legPivot.rotation.z=1.18 + Math.cos(t*16)*.22;
+      right.legPivot.rotation.z=-1.18 - Math.cos(t*16)*.22;
+    }else{left.armPivot.rotation.x=beat*2;right.armPivot.rotation.x=-beat*2;left.legPivot.rotation.x=wave*.9;right.legPivot.rotation.x=-wave*.9;}
+    if(kind!==5)c.root.position.y+=Math.abs(Math.sin(t*9))*.12;
+  }
+
+}
+
+function end(msg){
+  sfx('win');
+  over=true; running=false;
+  $('overlay').style.display='flex';
+  $('overlay').querySelector('h1').textContent = msg;
+  $('overlay').querySelector('h3').textContent = 'Score: '+Math.floor(score);
+  $('start').textContent='▶ PLAY AGAIN';
+  $('loading').textContent='You can try a new round!';
+}
+
+function distance(a,b){ return Math.hypot(a.x-b.x,a.z-b.z); }
+
+function promoteNewHunter(target){
+  const oldHunter = chars.find(c=>c.isHunter);
+  for(const c of chars) setRole(c,c===target);
+}
+
+function frame(dt){
+  if(!running || paused || over) return;
+  globalChaserSlowTime=Math.max(0,globalChaserSlowTime-dt);
+  remaining -= dt;
+  if(remaining<=0){ remaining=0; syncHud(); end('🏆 ROUND COMPLETE!'); return; }
+
+  // Remember positions before movement so fast chasers can't skip over a tag.
+  const beforeMove = new Map(chars.map(c=>[c,{x:c.x,z:c.z}]));
+  for(const c of chars){
+    c.tagCooldown=Math.max(0,(c.tagCooldown||0)-dt);
+    c.escapeTime=Math.max(0,(c.escapeTime||0)-dt);
+    if(c.ghostTime>0){
+      c.ghostTime=Math.max(0,c.ghostTime-dt);
+      setGhostOpacity(c,c.ghostTime>0 ? .23 : 1);
+    }
+  }
+  const hunters = chars.filter(c=>c.isHunter);
+  const closestHunter = c=>hunters.slice().sort((a,b)=>distance(c,a)-distance(c,b))[0];
+
+  const mx = (keys.d||keys.ArrowRight?1:0) - (keys.a||keys.ArrowLeft?1:0) + touch.x;
+  const mz = (keys.s||keys.ArrowDown?1:0) - (keys.w||keys.ArrowUp?1:0) - touch.y;
+  const vx = mx*Math.cos(orbit)+mz*Math.sin(orbit);
+  const vz = mz*Math.cos(orbit)-mx*Math.sin(orbit);
+
+  if(player.emoteTime>0 && (Math.hypot(vx,vz)>.1 || keys.Shift || sprintHeld))player.emoteTime=0;
+  const playerEscape=player.escapeTime>0 && Math.hypot(vx,vz)<.12;
+  move(player,player.emoteTime>0?0:(playerEscape?player.escapeX:vx),player.emoteTime>0?0:(playerEscape?player.escapeZ:vz),dt);
+
+  for(const c of chars.slice(1)){
+    let avx=0,avz=0;
+    if(!c.isHunter && c.escapeTime>0){
+      // Continue in the escape direction rather than turning back into the tagger.
+      avx=c.escapeX; avz=c.escapeZ;
+      c.wantSprint=c.stamina>2;
+      c.emoteTime=0;
+    } else if(c.isHunter){
+      const runners = chars.filter(r=>r!==c && !r.isHunter);
+      const target = runners.sort((a,b)=>distance(c,a)-distance(c,b))[0];
+      if(target){
+        c.routeTimer=(c.routeTimer||0)-dt;
+        if(c.routeTimer<=0 || !c.routeGoal || Math.hypot(target.x-c.routeGoal.x,target.z-c.routeGoal.z)>7){
+          const planned=smartPursuit(c,target);
+          c.routeGoal={x:c.x+planned[0],z:c.z+planned[1]};
+          c.routeTimer=0.28+(chars.indexOf(c)%5)*0.04;
+        }
+        avx=c.routeGoal.x-c.x;avz=c.routeGoal.z-c.z;
+        if(Math.hypot(avx,avz)<1){c.routeTimer=0;avx=target.x-c.x;avz=target.z-c.z;}
+        const gap=distance(c,target);
+        // Pro chaser uses dash only when pursuit is lined up, and target is reachable.
+        if(gap>5 && gap<23 && c.dashCooldown<=0 && pathClear(c.x,c.z,target.x,target.z,1.1)){
+          triggerDash(c,avx,avz);
+        }
+      }
+    } else {
+      const hunter=closestHunter(c);
+      const dx = c.x-hunter.x, dz = c.z-hunter.z, dist = Math.hypot(dx,dz);
+      // Pro escape: predict chaser trajectory, change lateral angle, conserve stamina when safe.
+      const hunterLeadX=hunter.x+(hunter.velX||0)*0.45;
+      const hunterLeadZ=hunter.z+(hunter.velZ||0)*0.45;
+      const fleeX=c.x-hunterLeadX, fleeZ=c.z-hunterLeadZ;
+      const fleeLen=Math.max(.01,Math.hypot(fleeX,fleeZ));
+      const sideX=-fleeZ/fleeLen, sideZ=fleeX/fleeLen;
+      const lateral=Math.sin(c.t*0.75+c.aiOffset)*2.8 + c.dodgeSign*2.2;
+      avx = dist<62 ? fleeX/fleeLen*12 + sideX*lateral : Math.sin(c.t*0.45+c.aiOffset)*3;
+      avz = dist<62 ? fleeZ/fleeLen*12 + sideZ*lateral : Math.cos(c.t*0.45+c.aiOffset)*3;
+      // Use boosts strategically; recover stamina outside the danger zone.
+      c.wantSprint = dist<37 && c.stamina>9 && c.sprintRest<=0;
+      if(dist>51 || c.stamina<3) c.wantSprint=false;
+      // Choose a clear retreat corridor instead of blindly running into a wall.
+      if(dist<48 && !pathClear(c.x,c.z,c.x+avx*1.1,c.z+avz*1.1,1.1)){
+        const left=[-avz,avx],right=[avz,-avx];
+        const options=[left,right,[avx,avz]];
+        options.sort((u,v)=>{
+          const grade=vec=>{const len=Math.hypot(...vec)||1;const x=c.x+vec[0]/len*14,z=c.z+vec[1]/len*14;return (pathClear(c.x,c.z,x,z,1.2)?100:0)+Math.hypot(x-hunterLeadX,z-hunterLeadZ);};
+          return grade(v)-grade(u);
+        });
+        [avx,avz]=options[0];
+      }
+      // Save dash until danger is real and a clear escape lane exists.
+      if(dist<20 && dist>3 && c.dashCooldown<=0){
+        const choices=[[fleeX,fleeZ],[fleeX-fleeZ*.7,fleeZ+fleeX*.7],[fleeX+fleeZ*.7,fleeZ-fleeX*.7]];
+        const best=choices.find(([dx,dz])=>{const l=Math.hypot(dx,dz)||1;return pathClear(c.x,c.z,c.x+dx/l*9,c.z+dz/l*9,1.1)});
+        if(best)triggerDash(c,best[0],best[1]);
+      }
+      if(dist<28 && c.y<.1 && nearWall(c,1.6) && c.vy===0)jumpChar(c);
+    }
+    if(!c.isHunter && c.escapeTime<=0){
+      c.aiThinkLeft=(c.aiThinkLeft||0)-dt;
+      if(c.aiThinkLeft<=0 || !c.cachedSteer){
+        c.cachedSteer=steerAI(c,avx,avz);
+        c.aiThinkLeft=.12+(chars.indexOf(c)%5)*.022;
+      }
+      [avx,avz]=c.cachedSteer;
+    }
+    c.aiHopTimer=Math.max(0,(c.aiHopTimer||0)-dt);
+    const moved=Math.hypot(c.velX||0,c.velZ||0)*dt;
+    c.stuckTime=moved<.03?c.stuckTime+dt:Math.max(0,c.stuckTime-dt*3);
+    if(c.stuckTime>.75 && c.aiHopTimer<=0){
+      const wall=nearWall(c,2.3);
+      if(wall){
+        if(c.y<=(c.groundY||0)+.12)jumpChar(c);
+        else if(!c.hopUsed)jumpChar(c);
+      }
+      c.aiHopTimer=2.2;c.stuckTime=0;
+    }
+    if(!c.isHunter && c.escapeTime<=0 && c.emoteTime<=0 && c.emoteCooldown<=0 && distance(c,closestHunter(c))>43 && Math.random()<.015){
+      c.emote=Math.floor(Math.random()*6);c.emoteTime=1.8+Math.random()*2;
+      c.emoteCooldown=10+Math.random()*12;
+    }
+    if(c.emoteTime>0){avx=0;avz=0;}
+    move(c,avx,avz,dt);
+    c.prevX=c.x;c.prevZ=c.z;
+  }
+
+  // Tag checks must happen BEFORE crowd separation pushes a hunter away.
+  // The broader separation runs after the tagging phase.
+
+  // Each chaser tags independently, maintaining exactly five red chasers.
+  function tagDistance(a,b){
+    const a0=beforeMove.get(a),b0=beforeMove.get(b);
+    // Relative swept-circle collision covers high-speed dash crossings.
+    const sx=a0.x-b0.x, sz=a0.z-b0.z;
+    const vx=(a.x-b.x)-sx, vz=(a.z-b.z)-sz;
+    const vv=vx*vx+vz*vz;
+    const t=vv>1e-8?THREE.MathUtils.clamp(-(sx*vx+sz*vz)/vv,0,1):0;
+    const crossed=Math.hypot(sx+vx*t,sz+vz*t);
+    return Math.min(distance(a,b),crossed);
+  }
+  const tagged=new Set();
+  for(const attacker of chars.filter(c=>c.isHunter)){
+    if(tagged.has(attacker) || attacker.tagCooldown>0 || attacker.ghostTime>0)continue;
+    let target=null, best=2.55;
+    for(const c of chars){
+      if(c.isHunter || tagged.has(c) || c.tagCooldown>0 || c.ghostTime>0)continue;
+      const d=tagDistance(attacker,c);
+      if(d<best && Math.abs(attacker.y-c.y)<1.3){best=d;target=c;}
+    }
+    if(target){
+      tagged.add(attacker);tagged.add(target);
+      // The caught runner becomes the new chaser. The previous chaser is a
+      // runner with a short tag shield, avoiding an immediate reverse tag.
+      sfx('tag');
+      setRole(attacker,false);
+      setRole(target,true);
+      globalChaserSlowTime=2.0;
+      attacker.tagCooldown=2.0;
+      target.tagCooldown=2.0;
+      // The new chaser is 23% visible for two seconds, letting the
+      // newly freed runner escape without overlap or an instant re-tag.
+      target.ghostTime=2.0;
+      target.dashTime=0;
+      target.wallHop=0;
+      setGhostOpacity(target,.23);
+      // The freed chaser is now a runner and flees in one fixed direction
+      // for 2 seconds, while the new chaser is slowed and translucent.
+      attacker.escapeTime=2.0;
+      target.escapeTime=0;
+      attacker.dashTime=0;
+      target.emoteTime=0;
+      // Separate both characters physically so their meshes cannot overlap.
+      let sepX=attacker.x-target.x,sepZ=attacker.z-target.z;
+      let sepLen=Math.hypot(sepX,sepZ);
+      if(sepLen<.01){sepX=Math.sin(target.ang+Math.PI/2);sepZ=Math.cos(target.ang+Math.PI/2);sepLen=1;}
+      const ux=sepX/sepLen,uz=sepZ/sepLen;
+      attacker.escapeX=ux; attacker.escapeZ=uz;
+      attacker.emoteTime=0;
+      for(const k of [4.2,3.4,2.6]){
+        const ax=THREE.MathUtils.clamp(target.x+ux*k,-worldHalf+2,worldHalf-2);
+        const az=THREE.MathUtils.clamp(target.z+uz*k,-worldHalf+2,worldHalf-2);
+        if(pathClear(target.x,target.z,ax,az,.9)){
+          attacker.x=ax; attacker.z=az;
+          attacker.root.position.x=ax;attacker.root.position.z=az;
+          break;
+        }
+      }
+      score+=target===player?50:25;
+      $('status').textContent=target===player?'🔴 TAGGED! You keep full chaser speed!':'🏷️ TAG! Bot chasers slowed for 2s!';
+    }
+  }
+
+  // A tag moves the former chaser, but all OTHER bots must also stay apart.
+  // Run this every frame, including when they gather in a crowded corner.
+  separateCharacters(2.05,3);
+
+  if(!player.isHunter) score += dt*10;
+  syncHud();
+}
+
+let previous = performance.now();
+function animate(now){
+  requestAnimationFrame(animate);
+  const dt = Math.min(.035,(now-previous)/1000); previous=now;
+  frame(dt);
+  musicTick();
+  if(running&&!paused&&!over){
+    updateEffects(dt);
+    if(audio.sfx && Math.hypot(player.velX||0,player.velZ||0)>2 && player.y<=(player.groundY||0)+.1){audio.foot-=dt;if(audio.foot<=0){sfx('step');audio.foot=player.sprinting?.16:.28;}} else audio.foot=0;
+  }
+  const cameraDistance = 18;
+  const horizontalDistance = cameraDistance*Math.cos(cameraPitch);
+  const goal = new THREE.Vector3(player.x + Math.sin(orbit)*horizontalDistance, player.y + 1.9 + cameraDistance*Math.sin(cameraPitch), player.z + Math.cos(orbit)*horizontalDistance);
+  camera.position.lerp(goal, Math.min(1,dt*5));
+  camera.lookAt(player.x,player.y+1.9,player.z);
+  renderer.render(scene,camera);
+}
+requestAnimationFrame(animate);
+
+const danceNames=['🙌 Victory Bounce','🕺 Disco Steps','🌊 Wave Dance','🥷 Ninja Shuffle','🤖 Robot Pop',"🎸 Breakin'"];
+const danceButtons=$('danceButtons');
+for(let i=0;i<danceNames.length;i++){
+  const b=document.createElement('button');b.textContent=danceNames[i];
+  b.addEventListener('click',()=>{player.emote=i;player.emoteTime=i===5?7:4.5;player.emoteCooldown=0;sfx('dance');$('emoteMenu').classList.remove('open');$('emoteBtn').setAttribute('aria-expanded','false');$('status').textContent='🎵 '+danceNames[i];});
+  danceButtons.appendChild(b);
+}
+$('emoteBtn').addEventListener('click',()=>{
+  const opened=$('emoteMenu').classList.toggle('open');
+  $('emoteBtn').setAttribute('aria-expanded',String(opened));
+});
+$('stopDance').addEventListener('click',()=>{player.emoteTime=0;$('emoteMenu').classList.remove('open');$('emoteBtn').setAttribute('aria-expanded','false');});
+$('start').onclick = ()=>{initAudio();sfx('click'); if(Number($('mapChoice').value)!==currentMap){buildMap(Number($('mapChoice').value));reset();} else if(over) reset(); $('overlay').style.display='none'; running=true; paused=false; };
+$('pause').onclick = ()=>{sfx('click'); if(!running) return; paused=!paused; $('pause').textContent = paused ? 'Resume' : 'Pause'; };
+$('reset').onclick = ()=>{initAudio();sfx('click'); buildMap(Number($('mapChoice').value));reset(); running=true; $('overlay').style.display='none'; };
+$('loading').textContent = 'Ready!';
+$('musicToggle').onclick=()=>{initAudio();audio.music=!audio.music;$('musicToggle').textContent=audio.music?'🎵 Music On':'🎵 Music Off';};
+$('sfxToggle').onclick=()=>{initAudio();audio.sfx=!audio.sfx;$('sfxToggle').textContent=audio.sfx?'🔊 SFX On':'🔇 SFX Off';if(audio.sfx)sfx('click');};
+$('soundVol').oninput=e=>{audio.volume=Math.max(0,Math.min(1,Number(e.target.value)/100));};
+
+const cancelKeys=['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '];
+function playerJump(){
+  if(!running || paused || over) return;
+  if(player.y<=(player.groundY||0)+0.12){
+    jumpChar(player);
+    $('status').textContent='🦘 JUMP!';
+  }else{
+    const hop=jumpChar(player);
+    if(hop==='wallhop')$('status').textContent='🧱 WALL HOP! Ninja kick off the wall!';
+  }
+}
+function playerDash(){
+  if(!running || paused || over) return;
+    if(player.dashCooldown>0){$('status').textContent='⚡ Dash recharging: '+player.dashCooldown.toFixed(1)+'s';return;}
+  const mdx=(keys.d||keys.ArrowRight?1:0)-(keys.a||keys.ArrowLeft?1:0)+touch.x;
+  const mdz=(keys.s||keys.ArrowDown?1:0)-(keys.w||keys.ArrowUp?1:0)-touch.y;
+  let dirX=mdx*Math.cos(orbit)+mdz*Math.sin(orbit);
+  let dirZ=mdz*Math.cos(orbit)-mdx*Math.sin(orbit);
+  if(Math.hypot(dirX,dirZ)<0.08){
+    // When standing still, dash in the character's facing direction.
+    dirX=Math.sin(player.ang);dirZ=Math.cos(player.ang);
+  }
+  if(triggerDash(player,dirX,dirZ)){
+    $('status').textContent=player.isHunter?'🔴 CHASER DASH! Catch those runners!':'⚡ NINJA DASH!';
+    syncHud();
+  }
+}
+addEventListener('keydown',e=>{
+  if(cancelKeys.includes(e.key))e.preventDefault();
+  if(e.key==='Shift' || e.key==='e' || e.key==='E')e.preventDefault();
+  keys[e.key]=true;
+  if(e.code==='Space' && !e.repeat)playerJump();
+  if((e.key==='Shift'||e.code==='ShiftLeft'||e.code==='ShiftRight') && !e.repeat)playerDash();
+});
+addEventListener('keyup',e=>{keys[e.key]=false;});
+addEventListener('blur',()=>{sprintHeld=false;keys.e=false;keys.E=false;});
+$('runBtn').addEventListener('pointerdown',e=>{e.preventDefault();$('runBtn').setPointerCapture(e.pointerId);sprintHeld=true;});
+for(const eventName of ['pointerup','pointercancel','lostpointercapture'])$('runBtn').addEventListener(eventName,()=>{sprintHeld=false;});
+// Pointerdown fires directly on both touchscreen and mouse, without tap delays.
+$('jump').addEventListener('pointerdown',e=>{e.preventDefault();playerJump();});
+$('dashBtn').addEventListener('pointerdown',e=>{e.preventDefault();playerDash();});
+// Keyboard-accessible mobile buttons.
+for(const [id,action] of [['jump',playerJump],['dashBtn',playerDash]]){
+  $(id).addEventListener('click',e=>{if(e.detail===0)action();});
+}
+
+const stick=$('stick'), nub=$('nub');
+function joystick(e){
+  const rect=stick.getBoundingClientRect(),dx=e.clientX-(rect.left+rect.width/2),dy=e.clientY-(rect.top+rect.height/2),l=Math.max(1,Math.hypot(dx,dy)),r=Math.min(43,l);
+  touch.x=dx/l*r/43; touch.y=-dy/l*r/43; nub.style.transform=`translate(${touch.x*43}px,${-touch.y*43}px)`;
+}
+stick.addEventListener('pointerdown',e=>{ stick.setPointerCapture(e.pointerId); joystick(e); });
+stick.addEventListener('pointermove',e=>{ if(stick.hasPointerCapture(e.pointerId)) joystick(e); });
+function stopJoy(){ touch.x=touch.y=0; nub.style.transform='translate(0,0)'; }
+stick.addEventListener('pointerup',stopJoy); stick.addEventListener('pointercancel',stopJoy);
+
+let drag=null;
+renderer.domElement.style.touchAction='none';
+renderer.domElement.addEventListener('pointerdown',e=>{
+  drag={x:e.clientX,y:e.clientY,id:e.pointerId};
+  renderer.domElement.setPointerCapture(e.pointerId);
+});
+renderer.domElement.addEventListener('pointermove',e=>{
+  if(!drag||drag.id!==e.pointerId)return;
+  const dx=e.clientX-drag.x, dy=e.clientY-drag.y;
+  // Swipe left looks left; swipe right looks right. Vertical drag tilts the camera.
+  orbit-=dx/Math.max(320,innerWidth)*3.2;
+  cameraPitch=THREE.MathUtils.clamp(cameraPitch+dy/Math.max(320,innerHeight)*2.7,-0.15,1.3);
+  drag.x=e.clientX;drag.y=e.clientY;
+});
+function stopCameraDrag(e){if(drag&&drag.id===e.pointerId)drag=null;}
+renderer.domElement.addEventListener('pointerup',stopCameraDrag);
+renderer.domElement.addEventListener('pointercancel',stopCameraDrag);
+renderer.domElement.addEventListener('lostpointercapture',stopCameraDrag);
+addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
+</script>
+</body>
+</html>
